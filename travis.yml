@@ -1,0 +1,39 @@
+language: objective-c
+source_key: 
+//Needed if one of the Pod/Library is hosted via a private git repository.
+//http://docs.travis-ci.com/user/travis-pro/#How-can-I-configure-Travis-Pro-to-use-private-GitHub-repositories-as-dependencies%3F
+
+before_install:
+- chmod +x Scripts/travis/add-key.sh
+- chmod +x Scripts/travis/remove-key.sh
+- chmod +x Scripts/travis/testflight.sh
+- gem install cocoapods --no-rdoc --no-ri --no-document --quiet
+
+// For each private pod/lib:
+- git clone --depth=50 --branch=master git@github.com:GIT_URL ../POD_PATH
+- git clone --depth=50 --branch=master git@github.com:GIT_URL2 ../POD_PATH2
+
+- brew unlink xctool
+- brew install xctool --HEAD
+before_script:
+- ./Scripts/travis/add-key.sh
+script:
+- xctool -workspace PROJECT_NAME.xcworkspace -scheme SCHEME_NAME -sdk iphonesimulator ONLY_ACTIVE_ARCH=NO
+- xctool test -workspace PROJECT_NAME.xcworkspace -scheme SCHEME_NAME -sdk iphonesimulator ONLY_ACTIVE_ARCH=NO
+- xctool -workspace PROJECT_NAME.xcworkspace -scheme SCHEME_NAME -configuration Release build archive
+after_script:
+- ./Scripts/travis/remove-key.sh
+after_success:
+- ./Scripts/travis/testflight.sh
+env:
+  global:
+  - secure: 
+  // Added via travis encrypt "KEY_PASSWORD=PWD" --add
+  - secure:
+  // Added via travis encrypt "TEAM_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxxxx" --add
+  - secure: 
+  // Added via travis encrypt "API_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxxxx" --add
+
+  - APPNAME="APP_NAME"
+  - 'DEVELOPER_NAME="iPhone Distribution: COMPANY_NAME"'
+  - PROFILE_UUID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
